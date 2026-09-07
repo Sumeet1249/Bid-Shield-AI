@@ -1,0 +1,11 @@
+backend/app/bidshield.db
+backend/uploads/*
+!backend/uploads/.gitkeep
+*.pyc
+__pycache__/
+.git/
+.env
+venv/
+env/
+node_modules/
+.DS_Store

@@ -3,7 +3,10 @@
    White-theme · Chatbot · Three.js Radar · Interactive
 ══════════════════════════════════════════════════════════════ */
 
-const API = 'http://127.0.0.1:5000/api';
+// Auto-detect API base URL (works for both local and Vercel deployment)
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://127.0.0.1:5000/api'
+  : '/api';
 
 /* ── STATE ─────────────────────────────────────────────────── */
 let currentRole    = 'officer';
