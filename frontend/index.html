@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BidShield AI — Smart Procurement Verification Platform</title>
+<meta name="description" content="AI-powered bidder verification and compliance scoring platform for government procurement officers. SIH 2024 Problem Statement 26100."/>
+<link rel="stylesheet" href="css/style.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <canvas id="hero-canvas"></canvas>
+
+  <!-- LEFT: pitch panel -->
+  <div class="login-left">
+    <div class="login-badge">🏛️ &nbsp;Smart India Hackathon 2024 &nbsp;·&nbsp; PS #26100</div>
+    <h1 class="login-headline">
+      Making Government<br>Procurement <span>Faster,<br>Transparent &amp; Smarter</span>
+    </h1>
+    <p class="login-desc">
+      AI-powered bidder verification platform that auto-validates GST, Udyam, registrations,
+      financial docs — and tracks real-world performance with geo-tagged evidence.
+    </p>
+    <div class="feature-pills">
+      <div class="feature-pill">
+        <div class="fp-icon teal">🤖</div>
+        <div><div class="fp-label">AI Document Verification</div><div class="fp-sub">Auto-analyse GST, PAN, CIN, Udyam, financial docs in seconds</div></div>
+      </div>
+      <div class="feature-pill">
+        <div class="fp-icon blue">📊</div>
+        <div><div class="fp-label">Compliance Score Engine</div><div class="fp-sub">Weighted scoring across eligibility, docs, blacklist, past performance</div></div>
+      </div>
+      <div class="feature-pill">
+        <div class="fp-icon purple">📍</div>
+        <div><div class="fp-label">Geo-tagged Site Evidence</div><div class="fp-sub">Inspection teams upload photos &amp; videos; citizens submit evidence</div></div>
+      </div>
+      <div class="feature-pill">
+        <div class="fp-icon orange">🧠</div>
+        <div><div class="fp-label">AI Compliance Agent</div><div class="fp-sub">Tells bidders exactly what's missing and how to fix their score</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: login card -->
+  <div class="login-right">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="logo-mark">BS</div>
+        <div class="logo-name">BidShield <span style="color:var(--teal)">AI</span></div>
+      </div>
+      <div class="logo-sub">PROCUREMENT INTELLIGENCE PLATFORM</div>
+
+      <div class="role-tabs">
+        <div class="role-tab selected" id="tab-officer" onclick="selectRole('officer')">
+          <span class="tab-icon">🏛️</span>Govt. Officer
+        </div>
+        <div class="role-tab" id="tab-bidder" onclick="selectRole('bidder')">
+          <span class="tab-icon">🏢</span>Bidder / Vendor
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Username / Employee ID</label>
+        <input id="login-user" type="text" placeholder="e.g. OFF-2024-RAJ or GSTxxxxxxxx" value="officer01"/>
+      </div>
+      <div class="field">
+        <label>Password / OTP</label>
+        <input id="login-pass" type="password" placeholder="Enter password" value="demo1234"/>
+      </div>
+      <div class="field">
+        <label>Ministry / Department</label>
+        <select id="login-dept">
+          <option>Ministry of Petroleum &amp; Natural Gas</option>
+          <option>Ministry of Defence</option>
+          <option>Ministry of Railways</option>
+          <option>CPWD – Public Works</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" id="login-btn" onclick="doLogin()">
+        🔐 &nbsp;Sign In to BidShield AI
+      </button>
+
+      <div class="login-divider"><hr/><span>DEMO CREDENTIALS PREFILLED</span><hr/></div>
+      <p class="login-note">
+        Protected under MeitY Digital Locker guidelines.<br/>
+        All verifications are audit-logged with immutable timestamps.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">BS</div>
+      <div>
+        <div class="logo-name">BidShield</div>
+        <div class="logo-sub" style="font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.8px">AI PLATFORM</div>
+      </div>
+    </div>
+
+    <div class="live-status"><div class="live-dot"></div> All systems operational</div>
+
+    <div class="nav-section-title">Dashboard</div>
+    <div class="nav-item active" id="nav-dash" onclick="showView('dash')">
+      <span class="nav-icon">🏠</span> Overview
+    </div>
+    <div class="nav-item" id="nav-how" onclick="showView('how')">
+      <span class="nav-icon">💡</span> How It Works
+    </div>
+
+    <div class="nav-section-title">Procurement</div>
+    <div class="nav-item" id="nav-tenders" onclick="showView('tenders')">
+      <span class="nav-icon">📋</span> Tenders
+    </div>
+    <div class="nav-item" id="nav-bidders" onclick="showView('bidders')">
+      <span class="nav-icon">🏢</span> Bidders
+    </div>
+    <div class="nav-item" id="nav-new-tender" onclick="showView('new-tender')">
+      <span class="nav-icon">➕</span> New Tender
+    </div>
+
+    <div class="nav-section-title">Verification</div>
+    <div class="nav-item" id="nav-verify" onclick="showView('verify')">
+      <span class="nav-icon">🤖</span> Run Verification
+      <div class="nav-badge">3</div>
+    </div>
+    <div class="nav-item" id="nav-perf" onclick="showView('perf')">
+      <span class="nav-icon">📍</span> Site Performance
+    </div>
+    <div class="nav-item" id="nav-citizen" onclick="showView('citizen')">
+      <span class="nav-icon">👥</span> Citizen Evidence
+    </div>
+
+    <div class="nav-section-title">Intelligence</div>
+    <div class="nav-item" id="nav-agent" onclick="showView('agent')">
+      <span class="nav-icon">🧠</span> AI Agent
+    </div>
+    <div class="nav-item" id="nav-connectors" onclick="showView('connectors')">
+      <span class="nav-icon">🔗</span> API Connectors
+    </div>
+    <div class="nav-item" id="nav-audit" onclick="showView('audit')">
+      <span class="nav-icon">🔒</span> Audit Trail
+    </div>
+
+    <div class="sidebar-foot">
+      SIH 2024 · PS-26100<br/>
+      BidShield AI v2.4.1<br/>
+      © 2024 Team BidShield
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="topbar-title" id="topbar-title">Dashboard Overview</div>
+          <div class="breadcrumb" id="topbar-bread">
+            BidShield AI <span>›</span> Dashboard
+          </div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-search" onclick="showToast('🔍 Search coming soon','info')">
+          🔍 &nbsp;<span>Search tenders, bidders…</span>
+        </div>
+        <button class="notif-btn" onclick="showView('audit')" title="Audit log">
+          🔔<div class="notif-dot"></div>
+        </button>
+        <div class="officer-chip" onclick="showToast('👤 Profile panel coming soon','info')">
+          <div class="avatar">RK</div>
+          <span id="officer-name">Rajesh Kumar</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()">↩ Logout</button>
+      </div>
+    </header>
+
+    <!-- ══ VIEW: DASHBOARD ════════════════════════════════════════ -->
+    <div class="view active" id="view-dash">
+
+      <!-- PITCH BANNER -->
+      <div class="pitch-banner">
+        <div class="pitch-top">
+          <div>
+            <div class="pitch-ps">🏛️ Smart India Hackathon 2024 · Problem Statement #26100</div>
+            <div class="pitch-title">
+              Government procurement ko <span>faster, transparent<br>aur data-driven</span> banane ke liye
+            </div>
+          </div>
+          <div class="ps-badge">
+            <span class="ps-num">26100</span>
+            <div class="ps-lbl">PS-ID</div>
+          </div>
+        </div>
+        <div class="pitch-pillars">
+          <div class="pillar" onclick="showView('verify')">
+            <div class="pillar-icon">📄</div>
+            <div class="pillar-title">Auto Doc Verification</div>
+            <div class="pillar-desc">GST, Udyam, PAN, CIN — AI checks validity &amp; consistency instantly</div>
+          </div>
+          <div class="pillar" onclick="showView('verify')">
+            <div class="pillar-icon">📊</div>
+            <div class="pillar-title">Compliance Scoring</div>
+            <div class="pillar-desc">Weighted risk score with LOW / MEDIUM / HIGH bands</div>
+          </div>
+          <div class="pillar" onclick="showView('perf')">
+            <div class="pillar-icon">📍</div>
+            <div class="pillar-title">Site Performance Tracking</div>
+            <div class="pillar-desc">Geo-tagged photos &amp; videos from inspection teams &amp; citizens</div>
+          </div>
+          <div class="pillar" onclick="showView('agent')">
+            <div class="pillar-icon">🧠</div>
+            <div class="pillar-title">AI Compliance Agent</div>
+            <div class="pillar-desc">Tells bidders what's missing &amp; how to improve their readiness</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="stat-grid">
+        <div class="stat-card c-teal" onclick="showView('tenders')">
+          <div class="stat-header">
+            <span class="stat-icon">📋</span>
+            <span class="stat-change up">+2 this week</span>
+          </div>
+          <div class="stat-val c-teal" id="s-tenders">0</div>
+          <div class="stat-lbl">Active Tenders</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:60%;background:linear-gradient(90deg,#0BA89E,#2FE0C6)"></div></div>
+        </div>
+        <div class="stat-card c-blue" onclick="showView('bidders')">
+          <div class="stat-header">
+            <span class="stat-icon">🏢</span>
+            <span class="stat-change up">+5 this week</span>
+          </div>
+          <div class="stat-val c-blue" id="s-bidders">0</div>
+          <div class="stat-lbl">Registered Bidders</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:45%;background:linear-gradient(90deg,#2563EB,#60A5FA)"></div></div>
+        </div>
+        <div class="stat-card c-danger" onclick="showView('verify')">
+          <div class="stat-header">
+            <span class="stat-icon">⚠️</span>
+            <span class="stat-change dn">Needs action</span>
+          </div>
+          <div class="stat-val c-danger" id="s-flagged">0</div>
+          <div class="stat-lbl">High-Risk Flagged</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:30%;background:linear-gradient(90deg,#DC2626,#F87171)"></div></div>
+        </div>
+        <div class="stat-card c-success" onclick="showView('verify')">
+          <div class="stat-header">
+            <span class="stat-icon">✅</span>
+            <span class="stat-change up">85% pass rate</span>
+          </div>
+          <div class="stat-val c-success" id="s-verified">0</div>
+          <div class="stat-lbl">Verifications Run</div>
+          <div class="stat-bar"><div class="stat-bar-fill" style="width:75%;background:linear-gradient(90deg,#059669,#34D399)"></div></div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <!-- RECENT TENDERS -->
+        <div class="panel">
+          <div class="panel-head">
+            <h2>📋 Recent Tenders</h2>
+            <div class="head-actions">
+              <button class="btn btn-ghost btn-xs" onclick="showView('new-tender')">+ New</button>
+              <button class="btn btn-ghost btn-xs" onclick="showView('tenders')">View All →</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Tender</th><th>Dept</th><th>Bidders</th><th>Status</th></tr></thead>
+            <tbody id="dash-tenders">
+              <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-faint)">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- RISK SUMMARY -->
+        <div class="panel">
+          <div class="panel-head">
+            <h2>🎯 Risk Distribution</h2>
+            <button class="btn btn-ghost btn-xs" onclick="showView('verify')">Run Verification →</button>
+          </div>
+          <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12.5px;font-weight:700">
+                <span style="color:var(--success)">🟢 Low Risk</span><span style="color:var(--success)">1 bidder</span>
+              </div>
+              <div class="score-bar"><div class="score-bar-fill" id="bar-low" style="width:0%;background:var(--success)"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12.5px;font-weight:700">
+                <span style="color:var(--warn)">🟡 Medium Risk</span><span style="color:var(--warn)">1 bidder</span>
+              </div>
+              <div class="score-bar"><div class="score-bar-fill" id="bar-mid" style="width:0%;background:var(--warn)"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12.5px;font-weight:700">
+                <span style="color:var(--danger)">🔴 High Risk</span><span style="color:var(--danger)">1 bidder</span>
+              </div>
+              <div class="score-bar"><div class="score-bar-fill" id="bar-high" style="width:0%;background:var(--danger)"></div></div>
+            </div>
+            <div style="margin-top:8px;padding:14px;background:var(--bg);border-radius:12px;border:1.5px solid var(--border)">
+              <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px;font-weight:700">🔄 Time Saved vs Manual Review</div>
+              <div style="display:flex;align-items:baseline;gap:8px">
+                <span style="font-size:32px;font-weight:800;color:var(--teal);font-family:'IBM Plex Mono',monospace">94%</span>
+                <span style="font-size:12px;color:var(--text-dim)">faster per bidder (avg. 4 min AI vs 3 days manual)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECENT AUDIT -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>🔒 Live Audit Feed</h2>
+          <button class="btn btn-ghost btn-xs" onclick="showView('audit')">Full Audit Trail →</button>
+        </div>
+        <div id="dash-audit"></div>
+      </div>
+    </div><!-- /dash -->
+
+    <!-- ══ VIEW: HOW IT WORKS ════════════════════════════════════ -->
+    <div class="view" id="view-how">
+      <div class="page-head">
+        <h1>💡 How BidShield AI Works</h1>
+        <p>End-to-end procurement intelligence — from document upload to verified decision support</p>
+      </div>
+
+      <!-- PITCH QUOTE -->
+      <div style="background:linear-gradient(135deg,#0B1528,#162040);border-radius:16px;padding:28px 32px;margin-bottom:24px;color:white;box-shadow:var(--shadow-lg)">
+        <div style="font-size:11px;color:#2FE0C6;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">Our Solution — In Our Own Words</div>
+        <blockquote style="font-size:14.5px;color:rgba(255,255,255,.82);line-height:1.8;border-left:3px solid #2FE0C6;padding-left:18px;font-style:italic">
+          "Sir, humara solution basically government procurement ko <strong style="color:#2FE0C6">faster, transparent aur data-driven</strong> banane ke liye hai.
+          Currently government tenders mein bidder ke GST, Udyam, registration, financial aur other eligibility documents ko <strong style="color:#FCD34D">manually verify karna padta hai</strong>,
+          jisme kaafi time lagta hai aur human error ka scope bhi hota hai.<br><br>
+          Hum ek <strong style="color:#2FE0C6">AI-powered Bidder Verification Platform</strong> bana rahe hain, jahan bidder apna profile create karke required documents upload karega.
+          AI automatically documents ko analyse karke missing documents, validity, consistency aur eligibility requirements check karega aur ek
+          <strong style="color:#2FE0C6">Compliance Score generate karega</strong>.<br><br>
+          Lekin hum sirf documents tak limited nahi hain — hum bidder ke <strong style="color:#A78BFA">past performance ko bhi track karenge</strong>.
+          Government inspection teams project sites se <strong style="color:#34D399">geo-tagged photos aur videos</strong> upload kar sakengi.
+          Applicable cases mein <strong style="color:#FCD34D">citizens bhi evidence submit</strong> kar sakenge.<br><br>
+          Hamare solution ka second major component <strong style="color:#2FE0C6">AI Agent</strong> hai. Agar kisi bidder ka compliance score low hai,
+          AI agent usko batayega ki problem exactly kaha hai aur score/readiness improve karne ke liye kya documents ya actions required hain."
+        </blockquote>
+        <div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,.38)">— Team BidShield, SIH 2024</div>
+      </div>
+
+      <!-- HOW GRID: Bidder Flow -->
+      <div class="panel">
+        <div class="panel-head"><h2>📤 Bidder Journey</h2></div>
+        <div class="how-grid">
+          <div class="how-card">
+            <div class="how-num">STEP 01</div>
+            <span class="how-icon">🏢</span>
+            <div class="how-title">Bidder Registration</div>
+            <div class="how-desc">Bidder creates profile with GSTIN, PAN, CIN, Udyam number. System fetches live data from government APIs immediately.</div>
+            <div class="how-connector"></div>
+          </div>
+          <div class="how-card">
+            <div class="how-num">STEP 02</div>
+            <span class="how-icon">📄</span>
+            <div class="how-title">Document Upload</div>
+            <div class="how-desc">Upload GST certificates, financial statements, registration proofs, OEM authorizations. AI performs OCR and cross-validates.</div>
+            <div class="how-connector"></div>
+          </div>
+          <div class="how-card">
+            <div class="how-num">STEP 03</div>
+            <span class="how-icon">📊</span>
+            <div class="how-title">Compliance Score Generated</div>
+            <div class="how-desc">Weighted score across eligibility, blacklist check, document validity, financial capability, and past performance.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HOW GRID: Officer Flow -->
+      <div class="panel">
+        <div class="panel-head"><h2>🏛️ Officer / Decision Flow</h2></div>
+        <div class="how-grid">
+          <div class="how-card">
+            <div class="how-num">STEP 01</div>
+            <span class="how-icon">🔍</span>
+            <div class="how-title">Officer Reviews Dashboard</div>
+            <div class="how-desc">Single unified view of all bidders for a tender with scores, risk flags, document status, and past performance.</div>
+            <div class="how-connector"></div>
+          </div>
+          <div class="how-card">
+            <div class="how-num">STEP 02</div>
+            <span class="how-icon">🤖</span>
+            <div class="how-title">AI Verification Runs</div>
+            <div class="how-desc">One click triggers 7 parallel API connectors — GSTN, MCA21, Udyam, NIC Blacklist, CIBIL, GeM, eProcurement.</div>
+            <div class="how-connector"></div>
+          </div>
+          <div class="how-card">
+            <div class="how-num">STEP 03</div>
+            <span class="how-icon">⚡</span>
+            <div class="how-title">Informed Decision Made</div>
+            <div class="how-desc">Officer gets AI-structured intelligence — not just data, but actionable insights. Approve, reject, or request clarification.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HOW GRID: Performance & Citizen -->
+      <div class="panel">
+        <div class="panel-head"><h2>📍 Performance Tracking &amp; Citizen Participation</h2></div>
+        <div class="how-grid">
+          <div class="how-card">
+            <div class="how-num">FEATURE 01</div>
+            <span class="how-icon">📸</span>
+            <div class="how-title">Site Inspection Evidence</div>
+            <div class="how-desc">Government inspection teams upload geo-tagged photos &amp; videos from project sites. Timestamped, tamper-proof, auto-linked to bidder profile.</div>
+          </div>
+          <div class="how-card">
+            <div class="how-num">FEATURE 02</div>
+            <span class="how-icon">👥</span>
+            <div class="how-title">Citizen Evidence Portal</div>
+            <div class="how-desc">Citizens can submit evidence about contractor work quality. Verified submissions are added to the bidder's performance record.</div>
+          </div>
+          <div class="how-card">
+            <div class="how-num">FEATURE 03</div>
+            <span class="how-icon">🧠</span>
+            <div class="how-title">AI Compliance Agent</div>
+            <div class="how-desc">Low-score bidders get personalised AI guidance on exactly which documents are missing and what steps to take to improve readiness.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GOAL STATEMENT -->
+      <div style="background:var(--teal-light);border:1.5px solid var(--teal-glow);border-radius:14px;padding:22px 26px;display:flex;gap:16px;align-items:flex-start">
+        <div style="font-size:28px">🎯</div>
+        <div>
+          <div style="font-size:14px;font-weight:800;color:var(--teal);margin-bottom:6px">Our Goal</div>
+          <div style="font-size:13.5px;color:var(--text);line-height:1.75">
+            <strong>We are not replacing the procurement officer.</strong> We are giving the officer
+            <em>verified, structured and actionable intelligence</em> to make better decisions — faster.
+            The platform serves as a <strong>verification and decision-support system</strong> for government,
+            and an <strong>AI-powered compliance assistant</strong> for bidders.
+          </div>
+        </div>
+      </div>
+    </div><!-- /how -->
+
+    <!-- ══ VIEW: TENDERS ═════════════════════════════════════════ -->
+    <div class="view" id="view-tenders">
+      <div class="page-head">
+        <h1>📋 Tender Management</h1>
+        <p>All active government tenders with bidder compliance status</p>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Active Tenders</h2>
+          <div class="head-actions">
+            <span class="badge badge-neutral" id="tender-count">Loading…</span>
+            <button class="btn btn-ghost btn-sm" onclick="showView('new-tender')">➕ New Tender</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Tender ID</th><th>Title</th><th>Department</th><th>Value</th><th>Deadline</th><th>Bidders</th><th>Action</th></tr></thead>
+          <tbody id="tenders-tbody">
+            <tr><td colspan="7" style="text-align:center;padding:28px;color:var(--text-faint)">Loading tenders…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /tenders -->
+
+    <!-- ══ VIEW: BIDDERS ═════════════════════════════════════════ -->
+    <div class="view" id="view-bidders">
+      <div class="page-head">
+        <h1>🏢 Bidder Registry</h1>
+        <p>All registered bidders with their compliance scores and risk profiles</p>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Registered Bidders</h2>
+          <div class="head-actions">
+            <select class="field" style="margin:0;width:auto;font-size:12px;padding:6px 10px" id="bidder-filter" onchange="filterBidders()">
+              <option value="">All Risk Levels</option>
+              <option value="LOW">🟢 Low Risk</option>
+              <option value="MEDIUM">🟡 Medium Risk</option>
+              <option value="HIGH">🔴 High Risk</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Company</th><th>GSTIN</th><th>Udyam</th><th>Compliance Score</th><th>Risk Level</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="bidders-tbody">
+            <tr><td colspan="7" style="text-align:center;padding:28px;color:var(--text-faint)">Loading bidders…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /bidders -->
+
+    <!-- ══ VIEW: NEW TENDER ══════════════════════════════════════ -->
+    <div class="view" id="view-new-tender">
+      <div class="page-head">
+        <h1>➕ Create New Tender</h1>
+        <p>Define tender requirements — AI will auto-match and verify eligible bidders</p>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Tender Details</h2></div>
+        <div class="form-grid">
+          <div class="field"><label>Tender Title</label><input id="nt-title" type="text" placeholder="e.g. Supply of Industrial Valves — BPCL"/></div>
+          <div class="field"><label>Department / Ministry</label><input id="nt-dept" type="text" placeholder="e.g. Ministry of Petroleum"/></div>
+          <div class="field"><label>Tender Value (₹ Crore)</label><input id="nt-value" type="number" placeholder="e.g. 15.5"/></div>
+          <div class="field"><label>Submission Deadline</label><input id="nt-deadline" type="date"/></div>
+          <div class="field full"><label>Scope of Work</label><input id="nt-scope" type="text" placeholder="Brief description of work scope…"/></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>🔒 Eligibility Requirements</h2><span style="font-size:11px;color:var(--text-faint)">Toggle requirements for this tender</span></div>
+        <div class="req-toggle-grid" id="req-toggles"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>📎 Tender Documents</h2></div>
+        <div class="dropzone" id="tender-drop" onclick="showToast('📎 File upload ready — connect storage API','info')">
+          <span class="dropzone-icon">📁</span>
+          Click or drag NIT, BOQ, Technical Specs here
+          <div class="dropzone-hint">PDF, XLSX, DOCX · Max 25MB per file</div>
+        </div>
+      </div>
+      <div style="padding:0 0 20px;display:flex;gap:10px">
+        <button class="btn btn-primary" style="width:auto;padding:11px 28px" onclick="createTender()">🚀 Publish Tender</button>
+        <button class="btn btn-ghost" onclick="showView('tenders')">Cancel</button>
+      </div>
+    </div><!-- /new-tender -->
+
+    <!-- ══ VIEW: VERIFY ══════════════════════════════════════════ -->
+    <div class="view" id="view-verify">
+      <div class="page-head">
+        <h1>🤖 AI Verification Engine</h1>
+        <p>Select a tender and bidder — AI will run 7 parallel verification pipelines</p>
+      </div>
+
+      <div class="two-col" style="margin-bottom:20px">
+        <div class="panel">
+          <div class="panel-head"><h2>Select Tender</h2></div>
+          <div style="padding:14px 20px">
+            <div class="field" style="margin:0">
+              <select id="verify-tender" onchange="loadVerifyBidders()">
+                <option value="">— Choose a Tender —</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Select Bidder</h2></div>
+          <div style="padding:14px 20px">
+            <div class="field" style="margin:0">
+              <select id="verify-bidder">
+                <option value="">— Choose a Bidder —</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="verify-panel">
+        <div class="panel-head">
+          <h2>🔍 Verification Pipeline</h2>
+          <button class="btn btn-primary btn-sm" id="run-btn" onclick="runVerification()">▶ Run AI Verification</button>
+        </div>
+        <div class="pipeline" id="verify-pipeline">
+          <div class="pipe-step" id="ps-0"><span class="pipe-icon">🔗</span>GSTN Live</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" id="ps-1"><span class="pipe-icon">🏢</span>MCA21</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" id="ps-2"><span class="pipe-icon">🏭</span>Udyam</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" id="ps-3"><span class="pipe-icon">🚫</span>Blacklist</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" id="ps-4"><span class="pipe-icon">💰</span>CIBIL</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" id="ps-5"><span class="pipe-icon">🛒</span>GeM</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-step" id="ps-6"><span class="pipe-icon">📋</span>eProcure</div>
+        </div>
+        <div class="api-log" id="verify-log">
+          <div><span class="k">[ BidShield AI ]</span> Select a tender and bidder, then click ▶ Run AI Verification</div>
+          <div style="color:rgba(255,255,255,.3)">→ 7 API connectors ready: GSTN · MCA21 · Udyam · Blacklist · CIBIL · GeM · eProcure</div>
+        </div>
+        <div id="verify-result-area"></div>
+      </div>
+    </div><!-- /verify -->
+
+    <!-- ══ VIEW: SITE PERFORMANCE ════════════════════════════════ -->
+    <div class="view" id="view-perf">
+      <div class="page-head">
+        <h1>📍 Site Performance Tracking</h1>
+        <p>Geo-tagged inspection evidence from government teams — auto-linked to bidder profiles</p>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-head">
+          <h2>📸 Upload Site Evidence</h2>
+          <span class="badge badge-blue">Inspection Team</span>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Select Bidder / Contractor</label>
+            <select id="perf-bidder">
+              <option>ABC Engineering Pvt. Ltd.</option>
+              <option>XYZ Industrial Solutions</option>
+              <option>PQR Enterprises</option>
+            </select>
+          </div>
+          <div class="field"><label>Project / Tender Reference</label>
+            <select id="perf-tender">
+              <option>CPCL/2026/PROC/001 — ETP Equipment</option>
+              <option>BPCL/2026/PROC/001 — Valve Supply</option>
+            </select>
+          </div>
+          <div class="field"><label>GPS Coordinates</label><input type="text" placeholder="e.g. 13.0827° N, 80.2707° E" id="perf-gps"/></div>
+          <div class="field"><label>Inspection Date</label><input type="date" id="perf-date"/></div>
+          <div class="field full"><label>Observation Notes</label><input type="text" placeholder="e.g. 60% work completed, site is clean and on schedule…"/></div>
+        </div>
+        <div class="dropzone" onclick="addPerfEvidence()">
+          <span class="dropzone-icon">📷</span>
+          Upload Geo-tagged Photos &amp; Videos
+          <div class="dropzone-hint">JPEG, MP4 · GPS metadata preserved · Max 50MB</div>
+        </div>
+        <div class="evidence-preview" id="evidence-preview">
+          <div class="ev-thumb" onclick="showToast('📷 Photo 1 — Site inspection Jan 2026','info')">🏗️<div class="ev-badge">✓</div></div>
+          <div class="ev-thumb" onclick="showToast('🎥 Video 1 — Progress walkthrough','info')">🎥<div class="ev-badge">✓</div></div>
+          <div class="ev-thumb" onclick="showToast('📷 Photo 2 — Equipment delivery','info')">🔧<div class="ev-badge">✓</div></div>
+          <div class="ev-thumb" style="opacity:.5;border-style:dashed" onclick="addPerfEvidence()">➕</div>
+        </div>
+        <div class="decision-row">
+          <button class="btn btn-success" onclick="submitEvidence()">✅ Submit Evidence — Link to Bidder Profile</button>
+          <button class="btn btn-ghost" onclick="showToast('📍 GPS auto-detected from EXIF metadata','info')">📍 Auto-detect GPS</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>📂 Past Site Records</h2><span class="badge badge-neutral">3 records</span></div>
+        <div class="perf-grid">
+          <div class="perf-card" onclick="showToast('📂 Full evidence record opened','info')">
+            <div class="perf-card-thumb">🏗️</div>
+            <div class="perf-card-title">CPCL Chennai — Site Visit #1</div>
+            <div class="perf-card-meta">ABC Engineering · 15 Jan 2026 · Inspector: R.Kumar</div>
+            <div class="perf-geo-tag">📍 13.0827°N, 80.2707°E · Verified</div>
+          </div>
+          <div class="perf-card" onclick="showToast('📂 Full evidence record opened','info')">
+            <div class="perf-card-thumb">🏭</div>
+            <div class="perf-card-title">BPCL Mumbai — Valve Delivery</div>
+            <div class="perf-card-meta">XYZ Industrial · 20 Feb 2026 · Inspector: S.Patel</div>
+            <div class="perf-geo-tag">📍 19.0760°N, 72.8777°E · Verified</div>
+          </div>
+          <div class="perf-card" onclick="showToast('📂 Full evidence record opened','info')">
+            <div class="perf-card-thumb">⚠️</div>
+            <div class="perf-card-title">HPCL Delhi — Quality Issue</div>
+            <div class="perf-card-meta">PQR Enterprises · 05 Mar 2026 · Citizen Flag</div>
+            <div class="perf-geo-tag" style="background:var(--danger-bg);color:var(--danger);border-color:rgba(220,38,38,.2)">⚠️ 28.6139°N, 77.2090°E · Flagged</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /perf -->
+
+    <!-- ══ VIEW: CITIZEN EVIDENCE ═════════════════════════════════ -->
+    <div class="view" id="view-citizen">
+      <div class="page-head">
+        <h1>👥 Citizen Evidence Submission</h1>
+        <p>Citizens can submit verified evidence about contractor performance — reviewed before linking to profiles</p>
+      </div>
+
+      <div style="background:linear-gradient(135deg,rgba(37,99,235,.07),rgba(124,58,237,.07));border:1.5px solid rgba(37,99,235,.2);border-radius:14px;padding:20px 24px;margin-bottom:20px;display:flex;gap:14px;align-items:flex-start">
+        <div style="font-size:28px">👥</div>
+        <div>
+          <div style="font-size:13.5px;font-weight:800;color:var(--blue);margin-bottom:5px">Citizen Participation in Procurement Accountability</div>
+          <div style="font-size:12.5px;color:var(--text-dim);line-height:1.7">
+            Applicable cases mein citizens bhi evidence submit kar sakenge — work quality, timeline delays, or safety violations.
+            Submitted evidence is <strong>reviewed by government officials</strong> before being permanently added to the bidder's performance record.
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Submit Evidence</h2><span class="badge badge-blue">Public Portal</span></div>
+        <div class="citizen-form">
+          <div class="field"><label>Your Name</label><input type="text" placeholder="e.g. Priya Sharma"/></div>
+          <div class="field"><label>Mobile / Aadhaar-linked (OTP)</label><input type="text" placeholder="+91 98xxxxxxxx"/></div>
+          <div class="field"><label>Contractor / Company Name</label>
+            <select><option>ABC Engineering Pvt. Ltd.</option><option>XYZ Industrial Solutions</option><option>PQR Enterprises</option><option>Other (specify below)</option></select>
+          </div>
+          <div class="field"><label>Project Location</label><input type="text" placeholder="Village / Ward / District…"/></div>
+          <div class="field full"><label>What Did You Observe?</label><input type="text" placeholder="Describe the issue or observation in detail…"/></div>
+          <div class="field full"><label>Evidence Type</label>
+            <select><option>Photo Evidence</option><option>Video Evidence</option><option>Eyewitness Testimony</option><option>Newspaper Report</option><option>RTI Response</option></select>
+          </div>
+        </div>
+        <div class="dropzone" onclick="showToast('📤 Upload interface ready','info')">
+          <span class="dropzone-icon">📱</span>
+          Upload Photos, Videos or Documents
+          <div class="dropzone-hint">Mobile camera supported · Location metadata captured automatically</div>
+        </div>
+        <div class="decision-row">
+          <button class="btn btn-primary" style="width:auto" onclick="submitCitizenEvidence()">📤 Submit for Review</button>
+          <span style="font-size:11.5px;color:var(--text-faint);align-self:center">Your identity is protected. Only verified submissions are published.</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>📋 Pending Review Queue</h2><span class="badge badge-warn">2 pending</span></div>
+        <table>
+          <thead><tr><th>Citizen</th><th>Contractor</th><th>Type</th><th>Location</th><th>Submitted</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>P. Sharma</td>
+              <td><b>PQR Enterprises</b></td>
+              <td><span class="badge badge-warn">Photo</span></td>
+              <td>Sector 14, Delhi</td>
+              <td>05 Mar 2026</td>
+              <td><span class="badge badge-warn">Pending Review</span></td>
+              <td>
+                <button class="btn btn-success btn-xs" onclick="showToast('✅ Evidence verified and linked to PQR profile','success')">Verify</button>
+                <button class="btn btn-danger btn-xs" onclick="showToast('❌ Evidence rejected','error')">Reject</button>
+              </td>
+            </tr>
+            <tr>
+              <td>A. Kumar</td>
+              <td><b>XYZ Industrial</b></td>
+              <td><span class="badge badge-blue">Video</span></td>
+              <td>Andheri, Mumbai</td>
+              <td>12 Mar 2026</td>
+              <td><span class="badge badge-warn">Pending Review</span></td>
+              <td>
+                <button class="btn btn-success btn-xs" onclick="showToast('✅ Evidence verified and linked to XYZ profile','success')">Verify</button>
+                <button class="btn btn-danger btn-xs" onclick="showToast('❌ Evidence rejected','error')">Reject</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /citizen -->
+
+    <!-- ══ VIEW: AI AGENT ════════════════════════════════════════ -->
+    <div class="view" id="view-agent">
+      <div class="page-head">
+        <h1>🧠 AI Compliance Agent</h1>
+        <p>Bidder-facing AI assistant — tells exactly what's missing and how to improve compliance score</p>
+      </div>
+
+      <div class="ai-agent-panel">
+        <div class="ai-agent-header">
+          <div class="ai-avatar">🤖</div>
+          <div>
+            <div class="ai-agent-title">BidShield Compliance AI</div>
+            <div class="ai-agent-sub">Powered by document analysis, live API connectors &amp; compliance rule engine</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <select class="chat-input" style="width:220px;flex:none" id="agent-bidder-select" onchange="loadAgentContext()">
+              <option value="">Select a bidder to analyse…</option>
+              <option value="1">ABC Engineering Pvt. Ltd. (Score: 96)</option>
+              <option value="2">XYZ Industrial Solutions (Score: 71)</option>
+              <option value="3">PQR Enterprises (Score: 39)</option>
+            </select>
+          </div>
+        </div>
+        <div class="chat-bubbles" id="chat-bubbles">
+          <div class="chat-bubble ai">
+            👋 Namaste! Main BidShield AI Compliance Agent hun. Kisi bidder ka profile select karo — main unhe bataunga ki unka compliance score improve karne ke liye exactly kya karna hai.
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chat-msg" placeholder="Ask about compliance, missing docs, eligibility…" onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="chat-send" onclick="sendChat()">Send →</button>
+        </div>
+      </div>
+
+      <!-- QUICK PROMPTS -->
+      <div class="panel">
+        <div class="panel-head"><h2>⚡ Quick Analysis Prompts</h2></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;padding:16px 20px">
+          <button class="btn btn-ghost btn-sm" onclick="quickPrompt('What documents are missing for this bidder?')">📄 Missing Documents</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickPrompt('Why is the compliance score low? Explain each deduction.')">📊 Score Breakdown</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickPrompt('Is this bidder blacklisted anywhere? Show sources.')">🚫 Blacklist Check</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickPrompt('What actions should the bidder take in the next 7 days to improve eligibility?')">🎯 7-Day Action Plan</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickPrompt('Summarise the bidder risk profile for the procurement officer.')">📋 Officer Summary</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickPrompt('Check GSTIN validity and turnover consistency.')">🔍 GSTIN Analysis</button>
+        </div>
+      </div>
+    </div><!-- /agent -->
+
+    <!-- ══ VIEW: API CONNECTORS ═══════════════════════════════════ -->
+    <div class="view" id="view-connectors">
+      <div class="page-head">
+        <h1>🔗 Government API Connectors</h1>
+        <p>Live integrations with official government data systems — all connections verified</p>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Active Connectors</h2><span class="badge badge-pass">7 / 7 Online</span></div>
+        <table>
+          <thead><tr><th>System</th><th>Endpoint</th><th>Verifies</th><th>Status</th><th>Avg Latency</th><th>Test</th></tr></thead>
+          <tbody>
+            <tr><td><b>GSTN Portal</b></td><td><code class="conn-endpoint">api.gstin.gov.in</code></td><td>GST registration, filing status, turnover</td><td><span class="conn-ping"><span class="conn-dot"></span>Online</span></td><td class="mono">312 ms</td><td><button class="btn btn-ghost btn-xs" onclick="pingConnector('GSTN')">Ping</button></td></tr>
+            <tr><td><b>MCA21</b></td><td><code class="conn-endpoint">mca.gov.in/mcafoportal</code></td><td>Company registration, directors, status</td><td><span class="conn-ping"><span class="conn-dot"></span>Online</span></td><td class="mono">428 ms</td><td><button class="btn btn-ghost btn-xs" onclick="pingConnector('MCA21')">Ping</button></td></tr>
+            <tr><td><b>Udyam Registry</b></td><td><code class="conn-endpoint">udyamregistration.gov.in</code></td><td>MSME classification, Udyam certificate</td><td><span class="conn-ping"><span class="conn-dot"></span>Online</span></td><td class="mono">198 ms</td><td><button class="btn btn-ghost btn-xs" onclick="pingConnector('Udyam')">Ping</button></td></tr>
+            <tr><td><b>NIC Blacklist</b></td><td><code class="conn-endpoint">eprocure.gov.in/debarred</code></td><td>Debarment / blacklist status</td><td><span class="conn-ping"><span class="conn-dot"></span>Online</span></td><td class="mono">265 ms</td><td><button class="btn btn-ghost btn-xs" onclick="pingConnector('Blacklist')">Ping</button></td></tr>
+            <tr><td><b>TransUnion CIBIL</b></td><td><code class="conn-endpoint">api.cibil.com/commercial</code></td><td>Credit score, defaults, NPA status</td><td><span class="conn-ping"><span class="conn-dot"></span>Online</span></td><td class="mono">510 ms</td><td><button class="btn btn-ghost btn-xs" onclick="pingConnector('CIBIL')">Ping</button></td></tr>
+            <tr><td><b>GeM Portal</b></td><td><code class="conn-endpoint">gem.gov.in/api/seller</code></td><td>GeM seller profile, ratings, orders</td><td><span class="conn-ping"><span class="conn-dot"></span>Online</span></td><td class="mono">345 ms</td><td><button class="btn btn-ghost btn-xs" onclick="pingConnector('GeM')">Ping</button></td></tr>
+            <tr><td><b>Central eProcurement</b></td><td><code class="conn-endpoint">eprocure.gov.in/cppp</code></td><td>Past contract performance, completion</td><td><span class="conn-ping"><span class="conn-dot"></span>Online</span></td><td class="mono">390 ms</td><td><button class="btn btn-ghost btn-xs" onclick="pingConnector('eProcure')">Ping</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /connectors -->
+
+    <!-- ══ VIEW: AUDIT TRAIL ═════════════════════════════════════ -->
+    <div class="view" id="view-audit">
+      <div class="page-head">
+        <h1>🔒 Immutable Audit Trail</h1>
+        <p>All verification events cryptographically timestamped — tamper-proof compliance record</p>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Audit Events</h2>
+          <div class="head-actions">
+            <span class="badge badge-blue">Blockchain-anchored</span>
+            <button class="btn btn-ghost btn-sm" onclick="showToast('📥 Audit log exported as PDF','success')">📥 Export</button>
+          </div>
+        </div>
+        <div id="audit-list"><div style="padding:28px;text-align:center;color:var(--text-faint)">Loading audit events…</div></div>
+      </div>
+    </div><!-- /audit -->
+
+  </main>
+</div><!-- /app -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ══ FLOATING CHATBOT ════════════════════════════════════════ -->
+<div id="chatbot-panel" class="chatbot-panel">
+  <!-- Header -->
+  <div class="chatbot-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="chatbot-avatar">🤖</div>
+      <div>
+        <div style="font-size:13.5px;font-weight:800">BidShield Assistant</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:5px">
+          <span style="width:6px;height:6px;background:#34D399;border-radius:50%;display:inline-block;animation:liveDot 1.8s infinite"></span>
+          AI-powered · Always available
+        </div>
+      </div>
+    </div>
+    <button onclick="toggleChatbot()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:18px;cursor:pointer;padding:4px;border-radius:6px;transition:color .14s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,.5)'">✕</button>
+  </div>
+
+  <!-- Quick chips -->
+  <div class="chatbot-chips">
+    <div class="cb-chip" onclick="document.getElementById('cb-input').value='How to verify a bidder?';sendChatbot()">▶ Verify bidder</div>
+    <div class="cb-chip" onclick="document.getElementById('cb-input').value='How is compliance score calculated?';sendChatbot()">📊 Score info</div>
+    <div class="cb-chip" onclick="document.getElementById('cb-input').value='What is blacklist check?';sendChatbot()">🚫 Blacklist</div>
+    <div class="cb-chip" onclick="document.getElementById('cb-input').value='Tell me about citizen evidence portal';sendChatbot()">👥 Citizens</div>
+    <div class="cb-chip" onclick="document.getElementById('cb-input').value='What API connectors are available?';sendChatbot()">🔗 APIs</div>
+    <div class="cb-chip" onclick="document.getElementById('cb-input').value='What is SIH problem statement 26100?';sendChatbot()">🏛️ About SIH</div>
+  </div>
+
+  <!-- Messages -->
+  <div class="chatbot-msgs" id="cb-msgs"></div>
+
+  <!-- Input -->
+  <div class="chatbot-input-row">
+    <input id="cb-input" class="chatbot-input" placeholder="Ask anything about BidShield AI…" onkeydown="cbKeydown(event)"/>
+    <button class="chatbot-send" onclick="sendChatbot()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- FAB button -->
+<button id="chatbot-fab" class="chatbot-fab" onclick="toggleChatbot()" title="BidShield AI Assistant">
+  🤖
+</button>
+
+<script src="js/app.js"></script>
+</body>
+</html>

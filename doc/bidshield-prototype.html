@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BidShield AI — GeM Bid Compliance Verification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{
+    --bg:#080B12;
+    --panel:#0F1826;
+    --panel-2:#141F33;
+    --border:#20304D;
+    --border-soft:#1A2740;
+    --text:#E8EDF7;
+    --text-dim:#8CA0C4;
+    --text-faint:#5A6B8C;
+    --teal:#2FE0C6;
+    --blue:#5B8DEF;
+    --warn:#F5A623;
+    --danger:#F2555A;
+    --success:#33D17E;
+    --radius:10px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Sora', sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:4px;}
+
+  /* ===== LOGIN SCREEN ===== */
+  #login-screen{
+    position:fixed; inset:0; display:flex; z-index:50;
+    background:var(--bg);
+  }
+  #hero-canvas{ position:absolute; inset:0; }
+  .login-overlay{
+    position:relative; z-index:2; margin:auto; width:380px; max-width:90vw;
+    background:rgba(15,24,38,0.72); backdrop-filter:blur(14px);
+    border:1px solid var(--border-soft); border-radius:16px; padding:36px 32px;
+  }
+  .brand-row{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .brand-mark{
+    width:30px; height:30px; border-radius:8px;
+    background:linear-gradient(135deg, var(--teal), var(--blue));
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; color:#04110F; font-size:15px;
+  }
+  .brand-name{ font-size:19px; font-weight:700; letter-spacing:0.2px; }
+  .brand-sub{ color:var(--text-dim); font-size:12.5px; margin-bottom:28px; }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:12px; color:var(--text-dim); margin-bottom:6px; }
+  .field input, .field select{
+    width:100%; padding:10px 12px; border-radius:8px;
+    border:1px solid var(--border); background:var(--panel-2); color:var(--text);
+    font-family:inherit; font-size:13.5px;
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--teal); }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:11px 18px; border-radius:8px; border:none; cursor:pointer;
+    font-family:inherit; font-size:13.5px; font-weight:600; transition:transform .12s ease, opacity .12s ease;
+  }
+  .btn:active{ transform:scale(0.98); }
+  .btn-primary{ background:linear-gradient(135deg, var(--teal), #21B79D); color:#04140F; width:100%; }
+  .btn-primary:hover{ opacity:0.92; }
+  .btn-ghost{ background:transparent; border:1px solid var(--border); color:var(--text); }
+  .btn-ghost:hover{ border-color:var(--text-dim); }
+  .btn-danger{ background:rgba(242,85,90,0.12); color:var(--danger); border:1px solid rgba(242,85,90,0.35); }
+  .btn-warn{ background:rgba(245,166,35,0.12); color:var(--warn); border:1px solid rgba(245,166,35,0.35); }
+  .btn-sm{ padding:7px 12px; font-size:12.5px; }
+  .login-note{ margin-top:18px; font-size:11.5px; color:var(--text-faint); line-height:1.6; }
+
+  /* ===== APP SHELL ===== */
+  #app{ display:none; height:100vh; }
+  #app.active{ display:flex; }
+  .sidebar{
+    width:216px; flex-shrink:0; background:var(--panel);
+    border-right:1px solid var(--border-soft); display:flex; flex-direction:column;
+    padding:18px 12px;
+  }
+  .sidebar .brand-row{ padding:0 8px; margin-bottom:26px; }
+  .nav-item{
+    display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px;
+    color:var(--text-dim); font-size:13px; font-weight:500; cursor:pointer; margin-bottom:2px;
+    transition:background .12s ease, color .12s ease;
+  }
+  .nav-item .dot{ width:6px; height:6px; border-radius:50%; background:transparent; }
+  .nav-item:hover{ background:var(--panel-2); color:var(--text); }
+  .nav-item.active{ background:rgba(47,224,198,0.1); color:var(--teal); }
+  .nav-item.active .dot{ background:var(--teal); }
+  .sidebar-foot{ margin-top:auto; padding:12px 8px; border-top:1px solid var(--border-soft); font-size:11.5px; color:var(--text-faint); }
+
+  .main{ flex:1; overflow-y:auto; }
+  .topbar{
+    height:56px; border-bottom:1px solid var(--border-soft); display:flex; align-items:center;
+    justify-content:space-between; padding:0 24px; position:sticky; top:0; background:rgba(8,11,18,0.85);
+    backdrop-filter:blur(8px); z-index:10;
+  }
+  .topbar-title{ font-size:15px; font-weight:600; }
+  .topbar-crumb{ color:var(--text-faint); font-size:12.5px; }
+  .officer-chip{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-dim); cursor:pointer; }
+  .avatar{ width:26px; height:26px; border-radius:50%; background:linear-gradient(135deg,var(--blue),var(--teal)); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#04140F; }
+
+  .view{ display:none; padding:24px 28px 60px; max-width:1180px; }
+  .view.active{ display:block; animation:fadeIn .25s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  .page-head{ margin-bottom:22px; }
+  .page-head h1{ font-size:20px; font-weight:700; margin-bottom:4px; }
+  .page-head p{ color:var(--text-dim); font-size:13px; }
+
+  /* stat cards */
+  .stat-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px; }
+  .stat-card{ background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--radius); padding:16px 18px; }
+  .stat-card .val{ font-size:26px; font-weight:700; font-family:'IBM Plex Mono',monospace; }
+  .stat-card .lbl{ color:var(--text-dim); font-size:12px; margin-top:4px; }
+  .stat-card.accent-teal .val{ color:var(--teal); }
+  .stat-card.accent-warn .val{ color:var(--warn); }
+  .stat-card.accent-danger .val{ color:var(--danger); }
+
+  .panel{ background:var(--panel); border:1px solid var(--border-soft); border-radius:var(--radius); overflow:hidden; margin-bottom:20px; }
+  .panel-head{ padding:14px 18px; border-bottom:1px solid var(--border-soft); display:flex; align-items:center; justify-content:space-between; }
+  .panel-head h2{ font-size:14px; font-weight:600; }
+  .panel-body{ padding:4px 0; }
+
+  table{ width:100%; border-collapse:collapse; }
+  th{ text-align:left; font-size:11px; text-transform:none; color:var(--text-faint); font-weight:600; padding:10px 18px; border-bottom:1px solid var(--border-soft); }
+  td{ padding:12px 18px; border-bottom:1px solid var(--border-soft); font-size:13px; }
+  tr:last-child td{ border-bottom:none; }
+  tr.row-link{ cursor:pointer; transition:background .12s ease; }
+  tr.row-link:hover{ background:var(--panel-2); }
+
+  .badge{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; font-size:11.5px; font-weight:600; }
+  .badge-pass{ background:rgba(51,209,126,0.12); color:var(--success); }
+  .badge-warn{ background:rgba(245,166,35,0.12); color:var(--warn); }
+  .badge-fail{ background:rgba(242,85,90,0.12); color:var(--danger); }
+  .badge-neutral{ background:var(--panel-2); color:var(--text-dim); }
+  .risk-low{ color:var(--success); }
+  .risk-medium{ color:var(--warn); }
+  .risk-high{ color:var(--danger); }
+
+  .back-link{ color:var(--text-dim); font-size:12.5px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; margin-bottom:14px; }
+  .back-link:hover{ color:var(--teal); }
+
+  /* tender form */
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:18px; }
+  .form-grid .full{ grid-column:1/-1; }
+  .req-toggle-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:0 18px 18px; }
+  .req-toggle{ display:flex; align-items:center; justify-content:space-between; background:var(--panel-2); border:1px solid var(--border-soft); border-radius:8px; padding:9px 12px; font-size:12.5px; }
+  .switch{ position:relative; width:34px; height:19px; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .slider{ position:absolute; inset:0; background:var(--border); border-radius:20px; cursor:pointer; transition:.15s; }
+  .slider:before{ content:""; position:absolute; height:14px; width:14px; left:2.5px; top:2.5px; background:#fff; border-radius:50%; transition:.15s; }
+  .switch input:checked + .slider{ background:var(--teal); }
+  .switch input:checked + .slider:before{ transform:translateX(15px); }
+
+  /* upload dropzone */
+  .dropzone{ margin:18px; border:1.5px dashed var(--border); border-radius:10px; padding:26px; text-align:center; color:var(--text-dim); font-size:12.5px; cursor:pointer; transition:border-color .15s; }
+  .dropzone:hover{ border-color:var(--teal); color:var(--teal); }
+
+  /* pipeline */
+  .pipeline{ display:flex; align-items:center; padding:22px 18px; gap:4px; flex-wrap:wrap; }
+  .pipe-step{ flex:1; min-width:110px; text-align:center; padding:12px 8px; border-radius:8px; background:var(--panel-2); border:1px solid var(--border-soft); font-size:11.5px; color:var(--text-faint); position:relative; transition:all .25s ease; }
+  .pipe-step.active{ border-color:var(--teal); color:var(--teal); background:rgba(47,224,198,0.08); }
+  .pipe-step.done{ border-color:var(--success); color:var(--success); }
+  .pipe-arrow{ color:var(--text-faint); font-size:14px; padding:0 2px; }
+  .pipe-icon{ font-size:16px; display:block; margin-bottom:5px; }
+
+  .api-log{ background:#050810; border-radius:8px; margin:0 18px 18px; padding:14px 16px; font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--text-dim); max-height:170px; overflow-y:auto; }
+  .api-log div{ margin-bottom:4px; }
+  .api-log .k{ color:var(--teal); }
+  .api-log .ok{ color:var(--success); }
+
+  /* score gauge */
+  .score-wrap{ display:flex; align-items:center; gap:28px; padding:20px; }
+  .gauge{ position:relative; width:140px; height:140px; flex-shrink:0; }
+  .gauge svg{ transform:rotate(-90deg); }
+  .gauge-num{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .gauge-num .n{ font-size:26px; font-weight:700; font-family:'IBM Plex Mono',monospace; }
+  .gauge-num .d{ font-size:10px; color:var(--text-faint); }
+
+  .chain{ padding:18px; }
+  .chain-step{ display:flex; align-items:center; gap:12px; padding:9px 0; font-size:12.5px; }
+  .chain-line{ width:2px; flex-shrink:0; }
+  .chain-dot{ width:9px; height:9px; border-radius:50%; background:var(--teal); flex-shrink:0; }
+  .chain-arrow{ text-align:center; color:var(--text-faint); font-size:12px; padding-left:4px; }
+
+  .discrepancy-box{ margin:0 18px 16px; border:1px solid rgba(245,166,35,0.35); background:rgba(245,166,35,0.06); border-radius:8px; padding:14px 16px; }
+  .discrepancy-box h4{ color:var(--warn); font-size:12.5px; margin-bottom:8px; }
+  .discrepancy-box .row{ display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px; color:var(--text-dim); }
+  .discrepancy-box .row b{ color:var(--text); font-weight:500; }
+
+  .risk-ind{ display:flex; flex-wrap:wrap; gap:8px; padding:14px 18px; }
+  .risk-pill{ font-size:11.5px; padding:5px 10px; border-radius:20px; background:var(--panel-2); border:1px solid var(--border-soft); }
+
+  .audit-item{ display:flex; gap:14px; padding:10px 18px; font-size:12.5px; border-bottom:1px solid var(--border-soft); }
+  .audit-item:last-child{ border-bottom:none; }
+  .audit-time{ color:var(--text-faint); font-family:'IBM Plex Mono',monospace; font-size:11.5px; width:70px; flex-shrink:0; }
+  .audit-text{ color:var(--text-dim); }
+  .audit-text b{ color:var(--text); font-weight:500; }
+
+  .decision-row{ display:flex; gap:10px; padding:18px; border-top:1px solid var(--border-soft); }
+  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0; background:var(--panel-2); border:1px solid var(--teal); color:var(--text); padding:12px 20px; border-radius:8px; font-size:13px; transition:all .25s ease; z-index:100; pointer-events:none; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .compliance-note{ display:flex; gap:8px; align-items:flex-start; background:rgba(91,141,239,0.08); border:1px solid rgba(91,141,239,0.3); border-radius:8px; padding:12px 14px; font-size:12px; color:var(--text-dim); margin:0 18px 18px; }
+
+  .rec-box{ margin:0 18px 16px; border-radius:8px; padding:16px; border:1px solid var(--border-soft); background:var(--panel-2); }
+  .rec-box .rec-title{ font-size:13.5px; font-weight:700; margin-bottom:10px; }
+  .rec-box ul{ list-style:none; }
+  .rec-box li{ font-size:12.5px; margin-bottom:5px; color:var(--text-dim); }
+  .rec-box li b{ color:var(--text); font-weight:500; }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN SCREEN ================= -->
+<div id="login-screen">
+  <canvas id="hero-canvas"></canvas>
+  <div class="login-overlay">
+    <div class="brand-row">
+      <div class="brand-mark">BS</div>
+      <div class="brand-name">BidShield AI</div>
+    </div>
+    <div class="brand-sub">AI-Powered GeM Bid Compliance Verification Platform</div>
+    <div class="field">
+      <label>Role</label>
+      <select id="role-select">
+        <option>Procurement Officer</option>
+        <option>Administrator</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="text" value="officer@cpcl.gem.gov.in" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" value="••••••••••" />
+    </div>
+    <button class="btn btn-primary" onclick="login()">Sign in</button>
+    <div class="login-note">Prototype build for SIH demonstration. All bidder, tender and government-portal data shown is synthetic dummy data — no live GSTN / PAN / MCA21 / EPFO / ESIC systems are contacted.</div>
+  </div>
+</div>
+
+<!-- ================= APP SHELL ================= -->
+<div id="app">
+  <div class="sidebar">
+    <div class="brand-row">
+      <div class="brand-mark">BS</div>
+      <div class="brand-name" style="font-size:15px;">BidShield AI</div>
+    </div>
+    <div class="nav-item active" data-view="view-dashboard" onclick="nav(this)"><span class="dot"></span>Dashboard</div>
+    <div class="nav-item" data-view="view-tenders" onclick="nav(this)"><span class="dot"></span>Tenders</div>
+    <div class="nav-item" data-view="view-audit" onclick="nav(this)"><span class="dot"></span>Audit Trail</div>
+    <div class="nav-item" data-view="view-settings" onclick="nav(this)"><span class="dot"></span>Settings</div>
+    <div class="sidebar-foot">
+      GeM Problem Statement 26100<br>Mock connectors · dummy datasets
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <span class="topbar-title" id="topbar-title">Dashboard</span>
+      </div>
+      <div class="officer-chip" onclick="logout()">
+        <div class="avatar">PO</div>
+        Officer Sharma · Sign out
+      </div>
+    </div>
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="view active" id="view-dashboard">
+      <div class="page-head">
+        <h1>Compliance overview</h1>
+        <p>Live snapshot across all active GeM tenders on this platform.</p>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="val">12</div><div class="lbl">Active tenders</div></div>
+        <div class="stat-card accent-teal"><div class="val">38</div><div class="lbl">Bids under review</div></div>
+        <div class="stat-card accent-danger"><div class="val">4</div><div class="lbl">High risk bidders</div></div>
+        <div class="stat-card accent-warn"><div class="val">11</div><div class="lbl">Pending officer review</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Recent tenders</h2><button class="btn btn-ghost btn-sm" onclick="alert('Prototype: tender creation form is on the Tenders tab.')">+ New tender</button></div>
+        <div class="panel-body">
+          <table>
+            <thead><tr><th>Tender</th><th>Organization</th><th>Bidders</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr class="row-link" onclick="openTender()"><td class="mono">CPCL/2026/PROC/001</td><td>Chennai Petroleum Corp. Ltd.</td><td>3</td><td><span class="badge badge-warn">Reviewing</span></td><td>→</td></tr>
+              <tr><td class="mono">MDL/2026/PROC/014</td><td>Mazagon Dock Shipbuilders</td><td>8</td><td><span class="badge badge-pass">Completed</span></td><td></td></tr>
+              <tr><td class="mono">NTPC/2026/PROC/077</td><td>NTPC Limited</td><td>5</td><td><span class="badge badge-neutral">Draft</span></td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TENDERS LIST / CREATE ===== -->
+    <div class="view" id="view-tenders">
+      <div class="page-head"><h1>Tenders</h1><p>Create a tender and let the AI extract its compliance requirements.</p></div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Create tender</h2></div>
+        <div class="form-grid">
+          <div class="field"><label>Tender ID</label><input value="CPCL/2026/PROC/001"></div>
+          <div class="field"><label>Organization</label><input value="Chennai Petroleum Corporation Limited"></div>
+          <div class="field"><label>Title</label><input value="Industrial Equipment Procurement"></div>
+          <div class="field"><label>Department</label><input value="Materials & Procurement"></div>
+          <div class="field"><label>Tender value (₹)</label><input value="42,00,00,000"></div>
+          <div class="field"><label>Submission deadline</label><input value="2026-09-25"></div>
+          <div class="field"><label>Minimum turnover</label><input value="₹10 Crore"></div>
+          <div class="field full"><label>Upload tender document (PDF/DOCX) — AI extracts requirements automatically</label></div>
+        </div>
+        <div class="dropzone" onclick="extractTender()">📄 Drop tender_CPCL_2026_001.pdf here, or click to run AI extraction</div>
+        <div style="padding:0 18px 6px; font-size:12px; color:var(--text-dim);">Required registrations (toggle to edit before extraction, or accept AI-extracted values)</div>
+        <div class="req-toggle-grid">
+          <div class="req-toggle">GST Registration<label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+          <div class="req-toggle">PAN<label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+          <div class="req-toggle">Udyam / MSME<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+          <div class="req-toggle">OEM Authorization<label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+          <div class="req-toggle">Make in India<label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+          <div class="req-toggle">EPFO<label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+          <div class="req-toggle">ESIC<label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+          <div class="req-toggle">Startup India<label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+          <div class="req-toggle">Blacklisting clear<label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+        </div>
+        <div style="padding:0 18px 18px;"><button class="btn btn-primary" style="width:auto; padding-left:24px; padding-right:24px;" onclick="openTender()">Save tender & manage bidders</button></div>
+      </div>
+    </div>
+
+    <!-- ===== TENDER DETAIL ===== -->
+    <div class="view" id="view-tender-detail">
+      <div class="back-link" onclick="showView('view-tenders')">← Back to tenders</div>
+      <div class="page-head">
+        <h1>CPCL/2026/PROC/001 — Industrial Equipment Procurement</h1>
+        <p>Chennai Petroleum Corporation Limited · Min. turnover ₹10 Cr · Deadline 25 Sep 2026</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Tender compliance matrix (AI-extracted from tender document)</h2></div>
+        <div class="panel-body">
+          <table>
+            <thead><tr><th>Requirement</th><th>Mandatory</th><th>Source of truth</th></tr></thead>
+            <tbody>
+              <tr><td>GST Registration</td><td><span class="badge badge-neutral">Required</span></td><td>GSTN</td></tr>
+              <tr><td>PAN</td><td><span class="badge badge-neutral">Required</span></td><td>Income Tax Dept.</td></tr>
+              <tr><td>Udyam / MSME</td><td><span class="badge badge-neutral">Optional</span></td><td>Udyam Registration Portal</td></tr>
+              <tr><td>OEM Authorization</td><td><span class="badge badge-neutral">Required</span></td><td>Manufacturer declaration</td></tr>
+              <tr><td>Make in India</td><td><span class="badge badge-neutral">Required</span></td><td>Self declaration</td></tr>
+              <tr><td>EPFO Compliance</td><td><span class="badge badge-neutral">Required</span></td><td>EPFO</td></tr>
+              <tr><td>ESIC Compliance</td><td><span class="badge badge-neutral">Required</span></td><td>ESIC</td></tr>
+              <tr><td>Blacklisting / Debarment</td><td><span class="badge badge-neutral">Must be clear</span></td><td>GeM Debarment Registry</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Bidders (3)</h2><button class="btn btn-ghost btn-sm">+ Add bidder</button></div>
+        <div class="panel-body">
+          <table>
+            <thead><tr><th>Company</th><th>GSTIN</th><th>Compliance score</th><th>Risk</th><th>Status</th><th></th></tr></thead>
+            <tbody id="bidder-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BIDDER EVALUATION ===== -->
+    <div class="view" id="view-bidder">
+      <div class="back-link" onclick="showView('view-tender-detail')">← Back to CPCL/2026/PROC/001</div>
+      <div class="page-head">
+        <h1 id="b-name">—</h1>
+        <p id="b-sub">—</p>
+      </div>
+
+      <div class="panel" id="panel-pipeline">
+        <div class="panel-head">
+          <h2>AI verification pipeline</h2>
+          <button class="btn btn-primary btn-sm" style="width:auto;" id="run-btn" onclick="runVerification()">▶ Run verification</button>
+        </div>
+        <div class="pipeline" id="pipeline-steps"></div>
+        <div class="api-log" id="api-log" style="display:none;"></div>
+      </div>
+
+      <div id="results-wrap" style="display:none;">
+        <div class="panel">
+          <div class="panel-head"><h2>Compliance score</h2></div>
+          <div class="score-wrap">
+            <div class="gauge">
+              <svg width="140" height="140" viewBox="0 0 140 140">
+                <circle cx="70" cy="70" r="60" stroke="#1A2740" stroke-width="12" fill="none"/>
+                <circle id="gauge-circle" cx="70" cy="70" r="60" stroke="#2FE0C6" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="377"/>
+              </svg>
+              <div class="gauge-num"><div class="n" id="gauge-num">0</div><div class="d">/ 100</div></div>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:13px; margin-bottom:8px;">Risk classification: <b id="risk-label" class="mono">—</b></div>
+              <div style="font-size:12px; color:var(--text-dim); line-height:1.7;">
+                Weighted across GST (10) · PAN (10) · Udyam (5) · IT compliance (15) · EPFO (5) · ESIC (5) · OEM (15) · Make in India (10) · Experience (15) · Blacklisting (10).
+              </div>
+            </div>
+          </div>
+          <div class="compliance-note">⚠ AI-generated risk assessment. Final qualification / disqualification decision must be made by the Procurement Officer.</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Compliance matrix</h2></div>
+          <div class="panel-body">
+            <table>
+              <thead><tr><th>Requirement</th><th>Source</th><th>Status</th><th>Evidence</th></tr></thead>
+              <tbody id="matrix-rows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel" id="discrepancy-panel">
+          <div class="panel-head"><h2>Discrepancy detection</h2></div>
+          <div id="discrepancy-body"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Risk indicators</h2></div>
+          <div class="risk-ind" id="risk-indicators"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Explainable AI — why this result</h2></div>
+          <div class="chain" id="explain-chain"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>AI recommendation</h2></div>
+          <div class="rec-box" id="rec-box"></div>
+          <div class="decision-row">
+            <button class="btn btn-primary" style="width:auto;" onclick="decide('Approved')">✓ Approve</button>
+            <button class="btn btn-warn" onclick="decide('Clarification requested')">Request clarification</button>
+            <button class="btn btn-danger" onclick="decide('Rejected')">✕ Reject</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== AUDIT TRAIL ===== -->
+    <div class="view" id="view-audit">
+      <div class="page-head"><h1>Audit trail</h1><p>Every verification action is timestamped and immutable for procurement compliance records.</p></div>
+      <div class="panel">
+        <div class="panel-body" id="audit-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== SETTINGS ===== -->
+    <div class="view" id="view-settings">
+      <div class="page-head"><h1>Portal connectors</h1><p>Mock connectors used for this prototype — production build points these at authenticated government APIs.</p></div>
+      <div class="panel">
+        <div class="panel-body">
+          <table>
+            <thead><tr><th>Connector</th><th>Endpoint</th><th>Mode</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>GSTN</td><td class="mono">/api/verify/gst</td><td>Dummy dataset</td><td><span class="badge badge-pass">Connected</span></td></tr>
+              <tr><td>Income Tax / PAN</td><td class="mono">/api/verify/pan</td><td>Dummy dataset</td><td><span class="badge badge-pass">Connected</span></td></tr>
+              <tr><td>Udyam Registration</td><td class="mono">/api/verify/udyam</td><td>Dummy dataset</td><td><span class="badge badge-pass">Connected</span></td></tr>
+              <tr><td>MCA21</td><td class="mono">/api/verify/mca</td><td>Dummy dataset</td><td><span class="badge badge-pass">Connected</span></td></tr>
+              <tr><td>EPFO</td><td class="mono">/api/verify/epfo</td><td>Dummy dataset</td><td><span class="badge badge-pass">Connected</span></td></tr>
+              <tr><td>ESIC</td><td class="mono">/api/verify/esic</td><td>Dummy dataset</td><td><span class="badge badge-pass">Connected</span></td></tr>
+              <tr><td>GeM Debarment Registry</td><td class="mono">/api/verify/blacklist</td><td>Dummy dataset</td><td><span class="badge badge-pass">Connected</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ DATA ============ */
+const BIDDERS = {
+  abc: {
+    key:'abc', name:'ABC Engineering Pvt Ltd', gstin:'19ABCDE1234F1Z5', pan:'ABCDE1234F', cin:'U29100TN2015PTC098211',
+    score:96, risk:'LOW',
+    matrix:[
+      ['GST','GSTN','pass','GST Certificate'],
+      ['PAN','Income Tax Dept.','pass','PAN Card'],
+      ['Udyam','Udyam Portal','pass','Udyam Certificate'],
+      ['Turnover','ITR','pass','ITR FY24-25'],
+      ['GST Filing Status','GSTN','pass','GSTR-3B Returns'],
+      ['OEM Authorization','Manufacturer','pass','Authorization Letter'],
+      ['EPFO','EPFO','pass','EPFO Compliance Cert.'],
+      ['ESIC','ESIC','pass','ESIC Compliance Cert.'],
+      ['Make in India','Self Declaration','pass','Signed Declaration'],
+      ['Blacklisting','GeM Debarment Registry','pass','Clear']
+    ],
+    discrepancies: [],
+    risks:['🟢 PAN verified','🟢 MCA verified','🟢 GST verified','🟢 No blacklisting'],
+    explain:['All statutory documents cross-verified against portal records','Legal name consistent across GST, PAN and MCA21','Turnover exceeds ₹10 Cr threshold','OEM authorization letter matches claimed manufacturer','✅ COMPLIANT'],
+    recTitle:'Fully Compliant', recTitleColor:'var(--success)',
+    reasons:['✓ GST registration verified','✓ PAN verified','✓ Income-tax documents consistent','✓ EPFO & ESIC compliance verified','✓ OEM authorization matches manufacturer','✓ No blacklisting detected'],
+    action:'Eligible for technical evaluation. No manual verification required.'
+  },
+  xyz: {
+    key:'xyz', name:'XYZ Industrial Solutions', gstin:'27XYZAB5678K1Z2', pan:'XYZAB5678K', cin:'U27310MH2012PTC231044',
+    score:71, risk:'MEDIUM',
+    matrix:[
+      ['GST','GSTN','pass','GST Certificate'],
+      ['PAN','Income Tax Dept.','pass','PAN Card'],
+      ['Udyam','Udyam Portal','pass','Udyam Certificate'],
+      ['Turnover','ITR','pass','ITR FY24-25'],
+      ['GST Filing Status','GSTN','warn','GSTR-3B — 1 return filed late'],
+      ['OEM Authorization','Manufacturer','fail','Authorization letter — manufacturer mismatch'],
+      ['EPFO','EPFO','pass','EPFO Compliance Cert.'],
+      ['ESIC','ESIC','warn','ESIC — renewal pending'],
+      ['Make in India','Self Declaration','pass','Signed Declaration'],
+      ['Blacklisting','GeM Debarment Registry','pass','Clear']
+    ],
+    discrepancies:[
+      {label:'OEM Authorization', a:'Claimed OEM: Hitachi Power Systems', b:'Authorization letter issuer: Hitachi Energy Pvt Ltd', conf:'87%'}
+    ],
+    risks:['🔴 OEM authorization unclear','🟠 ESIC renewal pending','🟡 GST return filed late','🟢 PAN verified','🟢 MCA verified'],
+    explain:['OEM Authorization required by tender','Document uploaded and OCR-processed','Manufacturer name extracted: "Hitachi Energy Pvt Ltd"','Bidder\\'s claimed OEM: "Hitachi Power Systems"','Manufacturer name does not match claimed OEM','❌ NON-COMPLIANT on this requirement'],
+    recTitle:'Conditionally Compliant', recTitleColor:'var(--warn)',
+    reasons:['✓ GST registration verified','✓ PAN verified','✓ EPFO compliance verified','✓ No blacklisting detected','⚠ OEM authorization requires manual verification','⚠ ESIC renewal is pending — request updated certificate'],
+    action:'Proceed to manual verification of OEM authorization before advancing this bid.'
+  },
+  pqr: {
+    key:'pqr', name:'PQR Enterprises', gstin:'07PQRXY9988M1Z8', pan:'PQRXY9988M', cin:'—',
+    score:39, risk:'HIGH',
+    matrix:[
+      ['GST','GSTN','fail','GST Certificate — status INACTIVE'],
+      ['PAN','Income Tax Dept.','pass','PAN Card'],
+      ['Udyam','Udyam Portal','fail','Not registered'],
+      ['Turnover','ITR','warn','Turnover below threshold'],
+      ['GST Filing Status','GSTN','fail','3 returns overdue'],
+      ['OEM Authorization','Manufacturer','fail','Document missing'],
+      ['EPFO','EPFO','fail','No active EPFO registration found'],
+      ['ESIC','ESIC','warn','Registration under review'],
+      ['Make in India','Self Declaration','pass','Signed Declaration'],
+      ['Blacklisting','GeM Debarment Registry','fail','Found on debarment registry (2024)']
+    ],
+    discrepancies:[
+      {label:'Legal entity name', a:'GST legal name: PQR Enterprises', b:'MCA21 legal name: P.Q.R. Enterprises Pvt Ltd', conf:'91%'},
+      {label:'Blacklisting', a:'Bidder declaration: "No prior debarment"', b:'GeM Debarment Registry: active listing 2024–2027', conf:'99%'}
+    ],
+    risks:['🔴 GSTIN inactive','🔴 Blacklisting found','🔴 EPFO not registered','🟠 Entity name mismatch','🟡 ESIC under review'],
+    explain:['Blacklisting check required for all bidders','Bidder self-declared no prior debarment','GeM Debarment Registry queried via mock connector','Active debarment record found, valid 2024–2027','This is disqualifying regardless of other scores','❌ NON-COMPLIANT — recommend disqualification'],
+    recTitle:'Non-Compliant', recTitleColor:'var(--danger)',
+    reasons:['✗ GST registration inactive','✗ Active blacklisting record found','✗ EPFO registration not found','✗ Entity name inconsistent across GST / MCA21','⚠ Turnover below the ₹10 Cr threshold'],
+    action:'Recommend disqualification. Blacklisting record and inactive GST status are both independently disqualifying.'
+  }
+};
+
+const AUDIT = [
+  ['09:41:21','Tender <b>CPCL/2026/PROC/001</b> created by Officer Sharma'],
+  ['09:43:05','Bidder <b>ABC Engineering Pvt Ltd</b> added'],
+  ['09:43:41','Bidder <b>XYZ Industrial Solutions</b> added'],
+  ['09:44:02','Bidder <b>PQR Enterprises</b> added'],
+  ['09:45:17','Documents uploaded for all 3 bidders (18 files)'],
+  ['09:45:32','OCR completed on all uploaded documents'],
+  ['09:46:11','GST verification run — 3 bidders queried'],
+  ['09:46:18','PAN verification run — 3 bidders queried'],
+  ['09:46:44','MCA21 cross-check run — entity name comparison'],
+  ['09:47:02','Discrepancy detected — <b>PQR Enterprises</b> entity name mismatch'],
+  ['09:47:09','Blacklisting check — <b>PQR Enterprises</b> flagged on debarment registry'],
+  ['09:47:35','AI risk assessment generated for all bidders'],
+  ['09:48:10','Officer review pending on 2 of 3 bidders']
+];
+
+let currentBidder = null;
+
+/* ============ NAV ============ */
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function nav(el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  const view = el.dataset.view;
+  showView(view);
+  document.getElementById('topbar-title').textContent = el.textContent.trim();
+  if(view==='view-audit') renderAudit();
+}
+function login(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').classList.add('active');
+  renderAudit();
+}
+function logout(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').classList.remove('active');
+}
+function extractTender(){
+  showToast('AI extracted 8 compliance requirements from tender_CPCL_2026_001.pdf');
+}
+function openTender(){
+  nav(document.querySelector('[data-view="view-tenders"]')); // sync sidebar state harmlessly
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  showView('view-tender-detail');
+  document.getElementById('topbar-title').textContent = 'Tender · CPCL/2026/PROC/001';
+  renderBidderRows();
+}
+function renderBidderRows(){
+  const rows = Object.values(BIDDERS).map(b=>`
+    <tr class="row-link" onclick="openBidder('${b.key}')">
+      <td>${b.name}</td>
+      <td class="mono">${b.gstin}</td>
+      <td class="mono">${b.score}/100</td>
+      <td class="risk-${b.risk.toLowerCase()}">${b.risk}</td>
+      <td><span class="badge badge-neutral">Not verified</span></td>
+      <td>→</td>
+    </tr>`).join('');
+  document.getElementById('bidder-rows').innerHTML = rows;
+}
+function openBidder(key){
+  currentBidder = BIDDERS[key];
+  showView('view-bidder');
+  document.getElementById('topbar-title').textContent = currentBidder.name;
+  document.getElementById('b-name').textContent = currentBidder.name;
+  document.getElementById('b-sub').textContent = `GSTIN ${currentBidder.gstin} · PAN ${currentBidder.pan} · CIN ${currentBidder.cin}`;
+  document.getElementById('results-wrap').style.display='none';
+  document.getElementById('api-log').style.display='none';
+  document.getElementById('api-log').innerHTML='';
+  document.getElementById('run-btn').disabled=false;
+  document.getElementById('run-btn').textContent='▶ Run verification';
+  buildPipelineUI();
+}
+function buildPipelineUI(){
+  const steps = ['OCR','Text Extraction','Entity Extraction','Field Validation','Cross-Verification','Compliance Engine'];
+  const icons = ['🧾','📝','🔎','✅','🌐','⚙️'];
+  document.getElementById('pipeline-steps').innerHTML = steps.map((s,i)=>
+    `<div class="pipe-step" id="step-${i}"><span class="pipe-icon">${icons[i]}</span>${s}</div>` + (i<steps.length-1?'<span class="pipe-arrow">→</span>':'')
+  ).join('');
+}
+
+function runVerification(){
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('run-btn').textContent = 'Running…';
+  const log = document.getElementById('api-log');
+  log.style.display='block';
+  log.innerHTML='';
+  const b = currentBidder;
+  const steps = 6;
+  let i = 0;
+  const apiLines = [
+    `<div><span class="k">POST /api/verify/gst</span> {"gstin":"${b.gstin}"}</div>`,
+    `<div>→ <span class="ok">${b.matrix[0][2]==='pass'?'ACTIVE':'INACTIVE'}</span>, legal_name matched</div>`,
+    `<div><span class="k">POST /api/verify/pan</span> {"pan":"${b.pan}"}</div>`,
+    `<div>→ <span class="ok">VALID</span></div>`,
+    `<div><span class="k">POST /api/verify/mca</span> {"cin":"${b.cin}"}</div>`,
+    `<div>→ entity record ${b.discrepancies.length && b.key==='pqr' ? 'name variant found' : 'consistent'}</div>`,
+    `<div><span class="k">POST /api/verify/epfo</span></div>`,
+    `<div>→ <span class="ok">${b.matrix[6][2]}</span></div>`,
+    `<div><span class="k">POST /api/verify/blacklist</span></div>`,
+    `<div>→ ${b.matrix[9][2]==='fail'?'RECORD FOUND':'CLEAR'}</div>`
+  ];
+  function tick(){
+    if(i>0) document.getElementById(`step-${i-1}`).classList.replace('active','done');
+    if(i<steps){
+      document.getElementById(`step-${i}`).classList.add('active');
+      if(i>=3){ // start showing api log around cross-verification
+        const chunk = apiLines.slice((i-3)*2, (i-3)*2+2).join('');
+        log.innerHTML += chunk;
+        log.scrollTop = log.scrollHeight;
+      }
+      i++;
+      setTimeout(tick, 550);
+    } else {
+      document.getElementById(`step-${steps-1}`).classList.replace('active','done');
+      showResults(b);
+    }
+  }
+  tick();
+}
+
+function showResults(b){
+  document.getElementById('run-btn').textContent = 'Re-run verification';
+  document.getElementById('run-btn').disabled = false;
+  document.getElementById('results-wrap').style.display='block';
+
+  // gauge
+  const circumference = 2 * Math.PI * 60;
+  const offset = circumference - (b.score/100)*circumference;
+  const circle = document.getElementById('gauge-circle');
+  circle.style.stroke = b.score>=85?'#33D17E':(b.score>=60?'#F5A623':'#F2555A');
+  circle.setAttribute('stroke-dasharray', circumference);
+  setTimeout(()=>{ circle.style.transition='stroke-dashoffset 1s ease'; circle.setAttribute('stroke-dashoffset', offset); },50);
+  animateNumber('gauge-num', b.score);
+  document.getElementById('risk-label').textContent = b.risk+' RISK';
+  document.getElementById('risk-label').className = 'mono risk-'+b.risk.toLowerCase();
+
+  // matrix
+  document.getElementById('matrix-rows').innerHTML = b.matrix.map(r=>`
+    <tr><td>${r[0]}</td><td>${r[1]}</td><td>${badge(r[2])}</td><td>${r[3]}</td></tr>
+  `).join('');
+
+  // discrepancies
+  const dbody = document.getElementById('discrepancy-body');
+  if(b.discrepancies.length===0){
+    dbody.innerHTML = `<div style="padding:16px 18px; color:var(--text-dim); font-size:12.5px;">✅ No discrepancies detected across submitted documents and portal records.</div>`;
+  } else {
+    dbody.innerHTML = b.discrepancies.map(d=>`
+      <div class="discrepancy-box">
+        <h4>⚠ DISCREPANCY DETECTED — ${d.label}</h4>
+        <div class="row"><span>Source A</span><b>${d.a}</b></div>
+        <div class="row"><span>Source B</span><b>${d.b}</b></div>
+        <div class="row"><span>AI confidence</span><b>${d.conf}</b></div>
+      </div>
+    `).join('');
+  }
+
+  // risk indicators
+  document.getElementById('risk-indicators').innerHTML = b.risks.map(r=>`<span class="risk-pill">${r}</span>`).join('');
+
+  // explain chain
+  document.getElementById('explain-chain').innerHTML = b.explain.map((step,idx)=>`
+    <div class="chain-step"><span class="chain-dot"></span>${step}</div>
+    ${idx<b.explain.length-1?'<div class="chain-arrow">↓</div>':''}
+  `).join('');
+
+  // recommendation
+  document.getElementById('rec-box').innerHTML = `
+    <div class="rec-title" style="color:${b.recTitleColor}">${b.recTitle}</div>
+    <ul>${b.reasons.map(r=>`<li>${r}</li>`).join('')}</ul>
+    <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border-soft); font-size:12.5px;"><b style="color:var(--text);">Suggested action:</b> <span style="color:var(--text-dim);">${b.action}</span></div>
+  `;
+}
+
+function badge(status){
+  if(status==='pass') return '<span class="badge badge-pass">✓ PASS</span>';
+  if(status==='warn') return '<span class="badge badge-warn">⚠ WARNING</span>';
+  return '<span class="badge badge-fail">✕ FAIL</span>';
+}
+function animateNumber(id, target){
+  const el = document.getElementById(id);
+  let cur = 0;
+  const step = Math.max(1, Math.round(target/30));
+  const t = setInterval(()=>{
+    cur += step;
+    if(cur>=target){ cur=target; clearInterval(t); }
+    el.textContent = cur;
+  }, 25);
+}
+function decide(action){
+  showToast(`${action}: ${currentBidder.name} — recorded in audit trail by Officer Sharma`);
+}
+function renderAudit(){
+  document.getElementById('audit-list').innerHTML = AUDIT.map(a=>`
+    <div class="audit-item"><div class="audit-time">${a[0]}</div><div class="audit-text">${a[1]}</div></div>
+  `).join('');
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+/* ============ THREE.JS LOGIN HERO ============ */
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 100);
+  camera.position.set(0,0,13);
+
+  function resize(){
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  // central AI engine node
+  const coreGeo = new THREE.IcosahedronGeometry(1.15, 1);
+  const coreMat = new THREE.MeshBasicMaterial({color:0x2FE0C6, wireframe:true, transparent:true, opacity:0.9});
+  const core = new THREE.Mesh(coreGeo, coreMat);
+  group.add(core);
+  const coreSolid = new THREE.Mesh(coreGeo, new THREE.MeshBasicMaterial({color:0x2FE0C6, transparent:true, opacity:0.05}));
+  group.add(coreSolid);
+
+  // portal nodes orbiting
+  const portalNames = ['GSTN','PAN','UDYAM','MCA21','EPFO','ESIC','NSIC'];
+  const portals = [];
+  const radius = 4.6;
+  portalNames.forEach((name,i)=>{
+    const angle = (i/portalNames.length) * Math.PI*2;
+    const y = Math.sin(i*1.7)*1.2;
+    const x = Math.cos(angle)*radius;
+    const z = Math.sin(angle)*radius;
+    const geo = new THREE.SphereGeometry(0.16,16,16);
+    const mat = new THREE.MeshBasicMaterial({color:0x5B8DEF});
+    const node = new THREE.Mesh(geo, mat);
+    node.position.set(x,y,z);
+    group.add(node);
+    // connecting line
+    const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), node.position.clone()]);
+    const lineMat = new THREE.LineBasicMaterial({color:0x1A2740, transparent:true, opacity:0.6});
+    const line = new THREE.Line(lineGeo, lineMat);
+    group.add(line);
+    portals.push({node, baseY:y, phase:i});
+  });
+
+  // starfield
+  const starGeo = new THREE.BufferGeometry();
+  const starCount = 400;
+  const positions = new Float32Array(starCount*3);
+  for(let i=0;i<starCount*3;i++){ positions[i] = (Math.random()-0.5)*40; }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+  const starMat = new THREE.PointsMaterial({color:0x233355, size:0.06});
+  const stars = new THREE.Points(starGeo, starMat);
+  scene.add(stars);
+
+  let t=0;
+  function animate(){
+    requestAnimationFrame(animate);
+    t += 0.006;
+    group.rotation.y = t*0.6;
+    group.rotation.x = Math.sin(t*0.3)*0.15;
+    core.rotation.y += 0.004;
+    core.rotation.x += 0.002;
+    portals.forEach(p=>{ p.node.position.y = p.baseY + Math.sin(t*1.5+p.phase)*0.25; });
+    stars.rotation.y += 0.0003;
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>

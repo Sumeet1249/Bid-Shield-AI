@@ -1,0 +1,54 @@
+# Virtual Environment
+backend/venv/
+venv/
+ENV/
+env/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Databases
+backend/*.db
+backend/*.sqlite3
+*.db
+*.sqlite
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+backend/logs/
+
+# Uploaded scratch or temp files
+backend/uploads/*
+!backend/uploads/.gitkeep
