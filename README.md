@@ -7,6 +7,17 @@
 [![Python](https://img.shields.io/badge/Python-3.14+-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.1+-green.svg)](https://flask.palletsprojects.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Vercel-black)](https://bid-shield-ai.vercel.app)
+
+---
+
+## 🌐 Live Demo
+
+**🚀 Try it now:** [https://bid-shield-ai.vercel.app](https://bid-shield-ai.vercel.app)
+
+**Demo Credentials:**
+- Email: `officer@cpcl.gem.gov.in`
+- Password: `password123`
 
 ---
 
